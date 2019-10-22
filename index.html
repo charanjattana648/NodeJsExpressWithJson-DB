@@ -1,0 +1,372 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <style>
+        #result {
+            font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        #result td,
+        #result th {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        #result tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        #result tr:hover {
+            background-color: #ddd;
+        }
+
+        #result th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            text-align: left;
+            background-color: #4CAF50;
+            color: white;
+        }
+
+
+        #pop_details {
+            display: none;
+        }
+
+        #country_name {
+            text-align: center;
+        }
+
+        #country_name {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            text-align: left;
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+        }
+
+        .login,
+        #pop_details {
+            padding: 60px 50px;
+            background: #ccc;
+            text-align: center;
+        }
+
+        .login input,
+        #pop_details input {
+            height: 24px;
+            margin-bottom: 20px;
+            padding: 0 0 0 13px;
+        }
+
+        #btnLogin,
+        #btnDetails {
+            padding: 10px 74px;
+            background: #363636;
+            color: #fff;
+            border: none;
+            margin-bottom: 20px;
+        }
+
+        select#countryName {
+            width: 180px;
+            height: 34px;
+            padding: 0 0 0 11px;
+            margin-bottom: 20px;
+        }
+
+        input#minSlider,
+        input#maxSlider {
+            width: 163px;
+            margin-right: 10px;
+            padding: 0;
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 10px;
+        }
+
+        #country_details {
+            display: none;
+            text-align: center;
+        }
+
+        .login {
+            display: block;
+        }
+
+        label {
+
+            font-size: 18px;
+        }
+
+        p {
+            display: inline-block;
+            margin-right: 60px;
+            font-size: 18px;
+        }
+
+        h3 {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 5px 0px;
+        }
+
+        p#country_languages {
+            word-spacing: 6px;
+        }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script>
+        console.log("entered")
+        console.log(document.URL)
+
+        function login() {
+            if ($("#uName").val() == "") {
+                alert("Please enter your Username!!")
+            }
+            else if ($("#pass").val() == "") {
+                alert("Please enter your Password!!")
+            }
+            else {
+                $.post(document.URL, {
+                        name: $("#uName").val(),
+                        pwd: $("#pass").val(),
+                        min: $("#minNum").val(),
+                        max: $("#maxNum").val(),
+                        type: 'login'
+                    },
+                    checkStatus);
+            }
+        }
+
+        function checkStatus(dataFromtheServer) {
+
+            console.log("dataFromtheServer 2 : " + dataFromtheServer);
+            var status = dataFromtheServer.split("\n");
+            if (status[0] == "1") {
+                if (status.length == 3) {
+                    $("#minSlider").attr("max", Number(status[1]));
+                    $("#minSlider").attr("step", Number(status[1]) / 100);
+                    $("#minSlider").attr("value", 0);
+                    $("#maxSlider").attr("max", Number(status[1]));
+                    $("#maxSlider").attr("step", Number(status[1]) / 100);
+                    $("#maxSlider").attr("value", Number(status[1]));
+                    $("#minNum").val($("#minSlider").val());
+                    $("#maxNum").val($("#maxSlider").val())
+
+                    console.log("status : " + status);
+                    console.log("status 2 : " + status[2]);
+                    var countries = status[2].split(",");
+                    console.log("Countries : " + countries);
+                    for (cName in countries) {
+                        $("#countryName").append("<option value='" + countries[cName] + "'>" + countries[cName] + "</option>");
+                    }
+                    $("#pop_details").css("display", "block");
+                    $(".login").css("display", "none");
+                }
+            }
+            else {
+                alert("Login Failed, Please try again!!")
+            }
+        }
+        $(document).ready(function() {});
+
+        // to change value of text-input on slider 
+        function changeValue(statusSlider) {
+
+            console.log($("#minSlider").val() + " -- " + statusSlider)
+            //min slider =0
+            if (statusSlider == 0) {
+                $("#minNum").val($("#minSlider").val());
+            }
+            else {
+                $("#maxNum").val($("#maxSlider").val())
+            }
+
+        }
+
+        function population_Details() {
+            reset();
+            if ($("#minNum").val() > $("#maxNum").val()) {
+                alert("Minimum population can't be greater than maximum slider");
+                $("#result").css("display", "none");
+                $("#country_details").css("display", "none");
+            }
+            else {
+                $("#result").css("display", "table");
+                $("#country_details").css("display", "block");
+                countryData($("#countryName").val());
+                $("#country_name").text($("#countryName").val())
+                $.post(document.URL, {
+                    country: $("#countryName").val(),
+                    min: $("#minNum").val(),
+                    max: $("#maxNum").val(),
+                    type: "data"
+                }, resultData);
+
+            }
+        }
+
+
+
+        function resultData(result) {
+
+            console.log("data : " + result)
+            var data = JSON.parse(result);
+
+
+            ///////
+            let header_set = false;
+            let h = "";
+            let v = "";
+            console.log("length : " + data.length);
+
+            $.each(data, (key, theRow) => {
+                console.log(key + " , " + theRow);
+
+                v += "<tr>";
+                $.each(theRow, (theKeyInTheRow, theValueInTheRow) => {
+                    if (theKeyInTheRow == "country" || theKeyInTheRow == "iso2" || theKeyInTheRow == "capital") {
+
+                    }
+                    else {
+                        if (!header_set)
+                            h += "<th>" + theKeyInTheRow + "</th>";
+                        v += "<td>" + theValueInTheRow + "</td>";
+                    }
+                });
+
+                if (!header_set) {
+                    h = "<tr>" + h + "</tr>";
+                    header_set = true;
+                }
+                v += "</tr>";
+            });
+
+
+            // disiplayig the data
+            $("#result thead > tr").remove();
+            $("#result thead").append(h);
+            $("#result tbody > tr").remove();
+            $("#result tbody").append(v);
+
+
+        }
+
+        function countryData(countryName) {
+            $.post(document.URL, {
+                country: countryName,
+                type: "countryData"
+            }, display_country_data)
+        };
+
+        function display_country_data(countryDataFromServer) {
+            console.log("countryDataFromServer : " + countryDataFromServer)
+            var dataObj = JSON.parse(countryDataFromServer);
+            var data = dataObj[0];
+            console.log("Simple data : " + data + " --------------------" + data.Code);
+            countryLanguages(data.Code);
+            $("#country_continent").append(data.Continent);
+            $("#country_region").append(data.Region);
+            $("#country_gForm").append(data.GovernmentForm);
+            $("#country_code").append(data.Code);
+
+
+        }
+
+        function countryLanguages(countryCode) {
+
+            $.post(document.URL, {
+                code: countryCode,
+                type: "countryLanguages"
+            }, display_country_Languages)
+
+
+        }
+
+        function display_country_Languages(countryLanguagesFromServer) {
+            console.log("countryLanguagesFromServer : " + countryLanguagesFromServer)
+            var dataObj = JSON.parse(countryLanguagesFromServer);
+            var lan_Array = new Array();
+            for (data in dataObj) {
+                lan_Array.push(dataObj[data].Language);
+            }
+            var languages = "";
+            for (var i = 0; i < lan_Array.length; i++) {
+                languages += lan_Array[i];
+                if (i < lan_Array.length - 1) {
+                    languages += ", ";
+                }
+            }
+            $("#country_languages").append(languages);
+        }
+
+        function reset() {
+            $("#country_continent").text("");
+            $("#country_region").text("");
+            $("#country_gForm").text("");
+            $("#country_code").text("");
+            $("#country_languages").text("");
+        }
+    </script>
+
+</head>
+
+<body>
+    <header>
+        <h1>Special Topics in Mobile/Web Lab4</h1>
+    </header>
+    <article>
+        <div class="login">
+            <input type="text" id="uName" placeholder="Enter userName" /><br>
+            <input type="password" id="pass" placeholder="Enter password" /><br>
+            <button id="btnLogin" onclick="login()">Login</button>
+        </div>
+        <div id="pop_details">
+            <select id="countryName"></select><br>
+            <input id="minSlider" type="range" name="points" min="0" onclick="changeValue(0)">
+
+            <input type="number" id="minNum" placeholder="Enter minNum" /><br>
+            <input id="maxSlider" type="range" name="points" min="0" onclick="changeValue(1)">
+            <input type="number" id="maxNum" placeholder="Enter maxNum" /><br>
+
+
+            <button id="btnDetails" onclick="population_Details()">Population Details</button>
+        </div>
+    </article>
+    <div id="country_details">
+        <h2 id="country_name"></h2>
+        <label for="country_region"><strong>Region : </strong></label>
+        <p id="country_region"></p>
+        <label for="country_gForm"><strong>Government Form : </strong></label>
+        <p id="country_gForm"></p>
+        <label for="country_code"><strong>Code : </strong></label>
+        <p id="country_code"></p>
+        <label for="country_continent"><strong>Continent : </strong></label>
+        <p id="country_continent"></p>
+        <h3>Languages</h3>
+        <p id="country_languages"></p>
+    </div>
+
+    <table id="result">
+        <thead></thead>
+        <tbody></tbody>
+    </table>
+
+
+    <footer>
+        <hr>
+        <p>&copy;2019 Lab4 Special Topics in Mob/Web.</p>
+    </footer>
+</body>
+
+</html>
