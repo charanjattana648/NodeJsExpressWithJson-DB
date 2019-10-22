@@ -1,0 +1,2 @@
+include ':app'
+rootProject.name='Lab4_CSIS4280'
